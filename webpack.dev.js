@@ -1,6 +1,7 @@
 const path = require('path');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = {
     devtool: 'eval-cheap-module-source-map',
@@ -16,39 +17,40 @@ module.exports = {
                 exclude: /node_modules/,
                 loader: 'babel-loader',
                 options: {
-                    presets: ['es2015']
+                    presets: ['env']
                 }
             },
             {
                 test: /\.(scss|css)$/,
-                use: [
-                    {
-                        // creates style nodes from JS strings
-                        loader: "style-loader",
-                        options: {
-                            sourceMap: true
+                use: ExtractTextPlugin.extract({
+                    use: [
+                        {
+                            // translates CSS into CommonJS
+                            loader: 'css-loader',
+                            options: {
+                                sourceMap: true
+                            }
+                        },
+                        {
+                            // Runs compiled CSS through postcss for vendor prefixing
+                            loader: 'postcss-loader',
+                            options: {
+                                sourceMap: true
+                            }
+                        },
+                        {
+                            // compiles Sass to CSS
+                            loader: 'sass-loader',
+                            options: {
+                                outputStyle: 'expanded',
+                                sourceMap: true,
+                                sourceMapContents: true
+                            }
                         }
-                    },
-                    {
-                        // translates CSS into CommonJS
-                        loader: "css-loader",
-                        options: {
-                            sourceMap: true
-                        }
-                    },
-                    {
-                        // compiles Sass to CSS
-                        loader: "sass-loader",
-                        options: {
-                            outputStyle: 'expanded',
-                            sourceMap: true,
-                            sourceMapContents: true
-                        }
-                    }
-                    // Please note we are not running postcss here
-                ]
-            }
-            ,
+                    ],
+                    fallback: 'style-loader'
+                }),
+            },
             {
                 // Load all images as base64 encoding if they are smaller than 8192 bytes
                 test: /\.(png|jpg|gif)$/,
@@ -69,6 +71,9 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: './index.html',
             inject: true
-        })
+        }),
+        new ExtractTextPlugin('styles.[contentHash].css', {
+            allChunks: true
+        }),
     ]
 };
